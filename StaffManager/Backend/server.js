@@ -13,12 +13,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
-mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/student-management-app")
+mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/employee-management-app")
   .then(() => console.log("MongoDB connected"))
   .catch(err => console.error("MongoDB connection error:", err));
 
 //mongoose.connect(
-//process.env.MONGODB_URI || "mongodb://localhost:27017/student-management-app",
+//process.env.MONGODB_URI || "mongodb://localhost:27017/employee-management-app",
     //{
      // useNewUrlParser: true,
       //useUnifiedTopology: true,
@@ -85,7 +85,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: "Internal server error" });
 });
 
-const studentSchema = new mongoose.Schema(
+const employeeSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -94,13 +94,13 @@ const studentSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unique: true,  //two students can't have the same email
+      unique: true,  //two employees can't have the same email
     },
-    course: {
+    department: {
       type: String,
-      required: true,
+       required: true,
     },
-    enrollmentDate: {
+    joiningDate: {
       type: Date,
       required: true,
     },
@@ -115,23 +115,27 @@ const studentSchema = new mongoose.Schema(
   }
 );
 
-const Student = mongoose.model("Student", studentSchema);
+const Employee = mongoose.model("Employee", employeeSchema);
 
-const courseSchema = new mongoose.Schema(
+const departmentSchema = new mongoose.Schema(
     {
         name:{
             type: String,
             required: true,
-            unique: true // we can't have two courses with the same name
+            unique: true // we can't have two departments with the same name
         },
         description:{
             type: String,
             required: true
         },
-        duration: {
-            type: Number,
-            required: true
-        },
+        head: { 
+          type: String,
+          required: true 
+        },            
+        createdOn: { 
+          type: Date,
+          required: true 
+          },           
         status:{
             type: String,
             enum:["active", "inactive"],
@@ -142,196 +146,197 @@ const courseSchema = new mongoose.Schema(
     }
 );
 
-const Course  = mongoose.model("Course", courseSchema);
+const Department  = mongoose.model("Department", departmentSchema);
 
-//Course Routes
+//Department Routes
 
  //http requests
 
-app.get('/api/courses', async (req, res) =>{
+app.get('/api/departments', async (req, res) =>{
+      
        try {
-         const courses = await Course.find().sort({ name: 1 });
-         logger.info(`Retrieved ${courses.length} courses successfully`);
-         res.json(courses);
+         const departments = await Department.find().sort({ name: 1 });
+         logger.info(`Retrieved ${departments.length} departments successfully`);
+         res.json(departments);
        } catch (error) {
-         logger.error("Error fetching courses:", error);
+         logger.error("Error fetching departments:", error);
          res.status(500).json({ message: error.message });
        }
 })
 
-app.post("/api/courses", async (req, res) => {
+app.post("/api/departments", async (req, res) => {
   try {
-    const course = new Course(req.body);
-    const savedCourse = await course.save();
-    logger.info("New course created:", {
-      courseId: savedCourse._id,
-      name: savedCourse.name,
+    const department = new Department(req.body);
+    const savedDepartment = await department.save();
+    logger.info("New department created:", {
+      departmentId: savedDepartment._id,
+      name: savedDepartment.name,
     });
-    res.status(201).json(savedCourse);
+    res.status(201).json(savedDepartment);
   } catch (error) {
-    logger.error("Error creating course:", error);
+    logger.error("Error creating department:", error);
     res.status(400).json({ message: error.message });
   }
 });
 
-app.put("/api/courses/:id", async (req, res) => {
+app.put("/api/departments/:id", async (req, res) => {
   try {
-    const course = await Course.findByIdAndUpdate(req.params.id, req.body, {
+    const department = await Department.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     });
-    if (!course) {
-      logger.warn("Course not found for update:", { courseId: req.params.id });
-      return res.status(404).json({ message: "Course not found" });
+    if (!department) {
+      logger.warn("Department not found for update:", { departmentId: req.params.id });
+      return res.status(404).json({ message: "Department not found" });
     }
-    logger.info("Course updated successfully:", {
-      courseId: course._id,
-      name: course.name,
+    logger.info("Department updated successfully:", {
+      departmentId: department._id,
+      name: department.name,
     });
-    res.json(course);
+    res.json(department);
   } catch (error) {
-    logger.error("Error updating course:", error);
+    logger.error("Error updating department:", error);
     res.status(400).json({ message: error.message });
   }
 });
 
-app.delete("/api/courses/:id", async (req, res) => {
+app.delete("/api/departments/:id", async (req, res) => {
   try {
-    const enrolledStudents = await Student.countDocuments({
-      course: req.params.id,
+    const enrolledEmployees = await Employee.countDocuments({
+      department: req.params.id,
     });
-    if (enrolledStudents > 0) {
-      logger.warn("Attempted to delete course with enrolled students:", {
-        courseId: req.params.id,
-        enrolledStudents,
+    if (enrolledEmployees > 0) {
+      logger.warn("Attempted to delete department with enrolled employees:", {
+        departmentId: req.params.id,
+        enrolledEmployees,
       });
       return res
         .status(400)
-        .json({ message: "Cannot delete course with enrolled students" });
+        .json({ message: "Cannot delete department with enrolled employees" });
     }
 
-    const course = await Course.findByIdAndDelete(req.params.id);
-    if (!course) {
-      logger.warn("Course not found for deletion:", {
-        courseId: req.params.id,
+    const department = await Department.findByIdAndDelete(req.params.id);
+    if (!department) {
+      logger.warn("Department not found for deletion:", {
+        departmentId: req.params.id,
       });
-      return res.status(404).json({ message: "Course not found" });
+      return res.status(404).json({ message: "Department not found" });
     }
-    logger.info("Course deleted successfully:", {
-      courseId: course._id,
-      name: course.name,
+    logger.info("Department deleted successfully:", {
+      departmentId: department._id,
+      name: department.name,
     });
-    res.json({ message: "Course deleted successfully" });
+    res.json({ message: "Department deleted successfully" });
   } catch (error) {
-    logger.error("Error deleting course:", error);
+    logger.error("Error deleting department:", error);
     res.status(500).json({ message: error.message });
   }
 });
 
-app.get("/api/courses/:id", async (req, res) => {
+app.get("/api/departments/:id", async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id);
-    if (!course) {
-      return res.status(404).json({ message: "Course not found" });
+    const department = await Department.findById(req.params.id);
+    if (!department) {
+      return res.status(404).json({ message: "Department not found" });
     }
-    res.json(course);
+    res.json(department);
   } catch (error) {
-    logger.error("Error fetching course:", error);
+    logger.error("Error fetching department:", error);
     res.status(500).json({ message: error.message });
   }
 });
 
-// Student Routes
-app.get("/api/students", async (req, res) => {
+// Employee Routes
+app.get("/api/employees", async (req, res) => {
   try {
-    const students = await Student.find().sort({ createdAt: -1 });
-    logger.info(`Retrieved ${students.length} students successfully`);
-    res.json(students);
+    const employees = await Employee.find().sort({ createdAt: -1 });
+    logger.info(`Retrieved ${employees.length} employees successfully`);
+    res.json(employees);
   } catch (error) {
-    logger.error("Error fetching students:", error);
+    logger.error("Error fetching employees:", error);
     res.status(500).json({ message: error.message });
   }
 });
 
-app.post("/api/students", async (req, res) => {
+app.post("/api/employees", async (req, res) => {
   try {
-    const student = new Student(req.body);
-    const savedStudent = await student.save();
-    logger.info("New student created:", {
-      studentId: savedStudent._id,
-      name: savedStudent.name,
-      course: savedStudent.course,
+    const employee = new Employee(req.body);
+    const savedEmployee = await employee.save();
+    logger.info("New employee created:", {
+      employeeId: savedEmployee._id,
+      name: savedEmployee.name,
+      department: savedEmployee.department,
     });
-    res.status(201).json(savedStudent);
+    res.status(201).json(savedEmployee);
   } catch (error) {
-    logger.error("Error creating student:", error);
+    logger.error("Error creating employee:", error);
     res.status(400).json({ message: error.message });
   }
 });
 
-app.put("/api/students/:id", async (req, res) => {
+app.put("/api/employees/:id", async (req, res) => {
   try {
-    const student = await Student.findByIdAndUpdate(req.params.id, req.body, {
+    const employee = await Employee.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     });
-    if (!student) {
-      logger.warn("Student not found for update:", {
-        studentId: req.params.id,
+    if (!employee) {
+      logger.warn("Employee not found for update:", {
+        employeeId: req.params.id,
       });
-      return res.status(404).json({ message: "Student not found" });
+      return res.status(404).json({ message: "Employee not found" });
     }
-    logger.info("Student updated successfully:", {
-      studentId: student._id,
-      name: student.name,
-      course: student.course,
+    logger.info("Employee updated successfully:", {
+      employeeId: employee._id,
+      name: employee.name,
+      department: employee.department,
     });
-    res.json(student);
+    res.json(employee);
   } catch (error) {
-    logger.error("Error updating student:", error);
+    logger.error("Error updating employee:", error);
     res.status(400).json({ message: error.message });
   }
 });
 
-app.delete("/api/students/:id", async (req, res) => {
+app.delete("/api/employees/:id", async (req, res) => {
   try {
-    const student = await Student.findByIdAndDelete(req.params.id);
-    if (!student) {
-      logger.warn("Student not found for deletion:", {
-        studentId: req.params.id,
+    const employee = await Employee.findByIdAndDelete(req.params.id);
+    if (!employee) {
+      logger.warn("Employee not found for deletion:", {
+        employeeId: req.params.id,
       });
-      return res.status(404).json({ message: "Student not found" });
+      return res.status(404).json({ message: "Employee not found" });
     }
-    logger.info("Student deleted successfully:", {
-      studentId: student._id,
-      name: student.name,
-      course: student.course,
+    logger.info("Employee deleted successfully:", {
+      employeeId: employee._id,
+      name: employee.name,
+      department: employee.department,
     });
-    res.json({ message: "Student deleted successfully" });
+    res.json({ message: "Employee deleted successfully" });
   } catch (error) {
-    logger.error("Error deleting student:", error);
+    logger.error("Error deleting employee:", error);
     res.status(500).json({ message: error.message });
   }
 });
 
-app.get("/api/students/search", async (req, res) => {
+app.get("/api/employees/search", async (req, res) => {
   try {
     const searchTerm = req.query.q;
-    logger.info("Student search initiated:", { searchTerm });
+    logger.info("Employee search initiated:", { searchTerm });
 
-    const students = await Student.find({
+    const employees = await Employee.find({
       $or: [
         { name: { $regex: searchTerm, $options: "i" } },
-        { course: { $regex: searchTerm, $options: "i" } },
+        { department: { $regex: searchTerm, $options: "i" } },
         { email: { $regex: searchTerm, $options: "i" } },
       ],
     });
 
-    logger.info("Student search completed:", {
+    logger.info("Employee search completed:", {
       searchTerm,
-      resultsCount: students.length,
+      resultsCount: employees.length,
     });
-    res.json(students);
+    res.json(employees);
   } catch (error) {
-    logger.error("Error searching students:", error);
+    logger.error("Error searching employees:", error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -350,23 +355,22 @@ app.get('/api/dashboard/stats', async (req, res) => {
 
 // Helper function for dashboard stats
 async function getDashboardStats() {
-    const totalStudents = await Student.countDocuments();
-    const activeStudents = await Student.countDocuments({ status: 'active' });
-    const totalCourses = await Course.countDocuments();
-    const activeCourses = await Course.countDocuments({ status: 'active' });
-    const graduates = await Student.countDocuments({ status: 'inactive' });
-    const courseCounts = await Student.aggregate([
-        { $group: { _id: '$course', count: { $sum: 1 } } }
+    const totalEmployees = await Employee.countDocuments();
+    const activeEmployees = await Employee.countDocuments({ status: 'active' });
+    const totalDepartments = await Department.countDocuments();
+    const activeDepartments = await Department.countDocuments({ status: 'active' });
+    const inactiveEmployees = await Employee.countDocuments({ status: 'inactive' });
+    const departmentCounts = await Employee.aggregate([
+        { $group: { _id: '$department', count: { $sum: 1 } } }
     ]);
 
     return {
-        totalStudents,
-        activeStudents,
-        totalCourses,
-        activeCourses,
-        graduates,
-        courseCounts,
-        successRate: totalStudents > 0 ? Math.round((graduates / totalStudents) * 100) : 0
+        totalEmployees,
+        activeEmployees,
+        totalDepartments,
+        activeDepartments,
+        inactiveEmployees,
+        departmentCounts
     };
 }
 
@@ -402,7 +406,7 @@ app.get('/health/detailed', async (req, res) => {
             platform: process.platform
         };
 
-        // Response object
+       // Response object
         const healthCheck = {
             status: 'UP',
             timestamp: new Date(),
@@ -425,16 +429,16 @@ app.get('/health/detailed', async (req, res) => {
     }
 });
 
-//Get single student by ID
-app.get('/api/students/:id', async (req, res) => {
+//Get single employee by ID
+app.get('/api/employees/:id', async (req, res) => {
     try {
-        const student = await Student.findById(req.params.id);
-        if (!student) {
-            return res.status(404).json({ message: 'Student not found' });
+        const employee = await Employee.findById(req.params.id);
+        if (!employee) {
+            return res.status(404).json({ message: 'Employee not found' });
         }
-        res.json(student);
+        res.json(employee);
     } catch (error) {
-        logger.error('Error fetching student:', error);
+        logger.error('Error fetching employee:', error);
         res.status(500).json({ message: error.message });
     }
 });
