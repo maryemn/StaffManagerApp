@@ -13,7 +13,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
-mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/employee-management-app")
+mongoose.connect(
+"mongodb+srv://nasseurmaryem7_db_user:MaRY2005@cluster0.rspa1xm.mongodb.net/&appName=Cluster0"
+)
   .then(() => console.log("MongoDB connected"))
   .catch(err => console.error("MongoDB connection error:", err));
 
