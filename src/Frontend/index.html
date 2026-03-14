@@ -178,6 +178,8 @@
         padding: 20px;
         border-radius: 10px;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        overflow-x: auto;
+
       }
 
       .table-header {
@@ -458,6 +460,78 @@ tr:hover {
           transform: rotate(360deg);
         }
       }
+
+      /* Hamburger button */
+    .sidebar-toggle {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--text-color);
+      margin-right: 10px;
+    }
+
+      /* ===== Mobile Responsive ===== */
+   @media (max-width: 768px) {
+
+    .container {
+      flex-direction: column;
+    }
+
+     .menu-toggle {
+  display: block;
+}
+    .sidebar {
+    position: fixed;
+    left: -250px; /* caché par défaut */
+    transition: left 0.3s ease;
+    z-index: 100;
+  }
+
+  .sidebar.active {
+    left: 0; /* visible quand actif */
+  }
+
+  .main-content {
+    margin-left: 0; /* le contenu prend toute la largeur */
+    transition: margin-left 0.3s ease;
+  }
+
+  .sidebar-toggle {
+    display: block; /* montre le bouton hamburger */
+  }
+
+    .nav-item {
+      flex: 1;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+
+    .header {
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .search-bar {
+      width: 100%;
+    }
+
+    table {
+      font-size: 12px;
+    }
+
+    th, td {
+      padding: 8px;
+    }
+
+    .dashboard-cards {
+      grid-template-columns: 1fr;
+    }
+   
+}
     </style>
   </head>
   <body>
@@ -492,10 +566,16 @@ tr:hover {
 
       <div class="main-content">
         <div class="header">
+
+          <button id="sidebarToggle" class="sidebar-toggle">
+            <i class="fas fa-bars"></i>
+          </button>
+
           <div class="search-bar">
             <i class="fas fa-search"></i>
             <input type="text" placeholder="Search employees..." />
           </div>
+          
           <div class="user-profile">
             <div class="user-avatar">
               <i class="fas fa-user"></i>
@@ -736,7 +816,7 @@ tr:hover {
     </div>
 
     <script>
-      const API_BASE_URL = " staffmanager-env.eba-ttrrkgvk.eu-west-3.elasticbeanstalk.com";
+      const API_BASE_URL = "http://staffmanager-env.eba-ttrrkgvk.eu-west-3.elasticbeanstalk.com";
       let employees = [];
       let departments = [];
       let currentSection = "dashboard";
@@ -1409,6 +1489,21 @@ tr:hover {
         if (event.target === document.getElementById("deleteConfirmationModal"))
           closeDeleteModal();
       };
+
+    const sidebar = document.querySelector(".sidebar");
+    const sidebarToggle = document.getElementById("sidebarToggle");
+
+    sidebarToggle.addEventListener("click", () => {
+      sidebar.classList.toggle("active");
+    });
+    // closing sidebar 
+    document.addEventListener("click", (event) => {
+      const isClickInsideSidebar = sidebar.contains(event.target);
+      const isClickOnToggle = sidebarToggle.contains(event.target);
+      if (!isClickInsideSidebar && !isClickOnToggle && sidebar.classList.contains("active")) {
+        sidebar.classList.remove("active");
+      }
+    });
     </script>
   </body>
 </html>
