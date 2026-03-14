@@ -153,6 +153,10 @@ const Department  = mongoose.model("Department", departmentSchema);
 //Department Routes
 
  //http requests
+ 
+app.get('/', (req, res) => {
+  res.send('StaffManager API is running');
+});
 
 app.get('/api/departments', async (req, res) =>{
       
